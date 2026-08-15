@@ -1,0 +1,32 @@
+# GPU installation:
+#   Apple Silicon (Metal): pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/metal
+#   NVIDIA CUDA 12.x: pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu124
+#   Then: pip install thirthfloor
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "3thfloor"
+version = "0.1.1"
+description = "Local AI inference SDK. pip install, load, chat."
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [{name = "Justin Bench", email = "justin.bench@gmail.com"}]
+requires-python = ">=3.11"
+keywords = ["llm", "ai", "inference", "local", "gguf", "llama"]
+dependencies = ["llama-cpp-python>=0.3.0"]
+
+[project.optional-dependencies]
+hf = ["huggingface-hub>=0.23.0"]
+server = ["fastapi>=0.110.0", "uvicorn[standard]>=0.27.0"]
+dev = ["pytest>=8.0", "pytest-asyncio"]
+
+[project.urls]
+Homepage = "https://3thfloor.com"
+Repository = "https://github.com/3thfloor/python-engine"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["thirthfloor*"]
