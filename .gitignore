@@ -3,3 +3,5 @@ dist/
 build/
 __pycache__/
 *.pyc
+deanbot.py
+serve-gemma4.py
