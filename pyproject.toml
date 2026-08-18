@@ -26,7 +26,7 @@ dev = ["pytest>=8.0", "pytest-asyncio"]
 
 [project.urls]
 Homepage = "https://3thfloor.com"
-Repository = "https://github.com/3thfloor/python-engine"
+Repository = "https://github.com/3thfloor/laconic-python"
 
 [tool.setuptools.packages.find]
 where = ["."]
