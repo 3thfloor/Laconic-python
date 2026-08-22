@@ -85,7 +85,12 @@ class Engine:
             temperature=temperature,
             max_tokens=max_tokens,
         )
-        return response["choices"][0]["message"]["content"]
+        content = response["choices"][0]["message"]["content"]
+        if content and "</think>" in content:
+            content = content.split("</think>", 1)[-1]
+            while content.startswith("\n"):
+                content = content[1:]
+        return content
 
     def stream(self, alias, message, *, system=None, temperature=0.7, max_tokens=2048):
         """Send a message, get an iterator of token strings back."""
@@ -97,10 +102,34 @@ class Engine:
             max_tokens=max_tokens,
             stream=True,
         )
+        buffer = ""
+        past_thinking = False
+        emitted = False
         for chunk in response:
             token = chunk["choices"][0]["delta"].get("content", "")
-            if token:
+            if not token:
+                continue
+            if past_thinking:
+                if not emitted:
+                    while token.startswith("\n"):
+                        token = token[1:]
+                    if not token:
+                        continue
+                    emitted = True
                 yield token
+                continue
+            buffer += token
+            if "</think>" in buffer:
+                tail = buffer.split("</think>", 1)[-1]
+                while tail.startswith("\n"):
+                    tail = tail[1:]
+                buffer = ""
+                past_thinking = True
+                if tail:
+                    emitted = True
+                    yield tail
+        if not past_thinking and buffer:
+            yield buffer
 
     def session(self, alias, *, system=None, temperature=0.7):
         """Open a conversation session that keeps its own history."""
@@ -171,7 +200,8 @@ class Engine:
             return {"loaded": [engine._meta[a] for a in engine.loaded()]}
 
         @app.post("/models/load")
-        def models_load(body: dict):
+        def models_load(request: Request, body: dict):
+            _check_auth(request)
             alias = body.get("alias")
             path = body.get("path")
             if not alias or not path:
@@ -190,7 +220,8 @@ class Engine:
             return {"status": "loaded", "alias": alias}
 
         @app.post("/models/unload")
-        def models_unload(body: dict):
+        def models_unload(request: Request, body: dict):
+            _check_auth(request)
             alias = body.get("alias")
             if not alias:
                 raise HTTPException(status_code=400, detail="alias is required")
@@ -257,6 +288,11 @@ class Engine:
                 # parse the model's JSON response. Bypasses llama-cpp-python's grammar-
                 # based tool handling, which inflates context to 90k+ tokens for models
                 # without a native tool-calling chat template (e.g. Gemma 4).
+                import sys as _sys
+                for _i, _m in enumerate(messages):
+                    _ct = type(_m.get("content")).__name__
+                    _cl = len(str(_m.get("content", "")))
+                    print(f"[tool-call] msg[{_i}] role={_m.get('role')} content_type={_ct} content_chars={_cl}", flush=True, file=_sys.stderr)
                 tool_lines = []
                 for t in tools:
                     fn = t.get("function", t)
