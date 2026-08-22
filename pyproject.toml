@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "3thfloor"
-version = "0.1.4"
+version = "0.1.5"
 description = "Local AI inference SDK. pip install, load, chat."
 readme = "README.md"
 license = "LicenseRef-PolyForm-Noncommercial-1.0.0"
